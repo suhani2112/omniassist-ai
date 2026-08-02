@@ -14,7 +14,7 @@ planner = AgentPlanner(llm)
 executor = AgentExecutor()
 
 
-query = "calculate 25 * 50"
+query = "what is machine learning"
 
 
 plan = planner.decide(query)

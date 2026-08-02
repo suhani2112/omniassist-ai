@@ -1,18 +1,23 @@
 from fastapi import APIRouter
-from backend.schemas.chat_schema import ChatRequest, ChatResponse
-from backend.services.query_service import QueryService
+from pydantic import BaseModel
+
+from backend.services.service_container import query_service
 
 
 router = APIRouter()
 
-query_service = QueryService()
+
+class ChatRequest(BaseModel):
+
+    message: str
 
 
-@router.post("/chat", response_model=ChatResponse)
+
+@router.post("/chat")
 def chat(request: ChatRequest):
 
-    result = query_service.process_query(
+    response = query_service.process_query(
         request.message
     )
 
-    return result
+    return response

@@ -1,47 +1,86 @@
-import re
+import ast
+import operator
+
+from backend.tools.base_tool import BaseTool
 
 
-class CalculatorTool:
-
-    name = "calculator"
-
-    description = "Performs mathematical calculations"
+class CalculatorTool(BaseTool):
 
 
-    def run(self, expression: str):
+    @property
+    def name(self):
+
+        return "calculator"
+
+
+    @property
+    def description(self):
+
+        return "Used for mathematical calculations"
+
+
+    def run(self, input_data: str):
 
         try:
-            expression = expression.lower()
 
-            # Convert words into operators
-            expression = expression.replace("divided by", "/")
-            expression = expression.replace("divide", "/")
-            expression = expression.replace("multiplied by", "*")
-            expression = expression.replace("multiply", "*")
-            expression = expression.replace("times", "*")
-            expression = expression.replace("plus", "+")
-            expression = expression.replace("minus", "-")
+            expression = input_data.strip()
 
-            # Remove unnecessary words
-            expression = expression.replace("calculate", "")
-            expression = expression.replace("find", "")
-            expression = expression.replace("what is", "")
-
-            expression = expression.strip()
-
-
-            # Keep only numbers and operators
-            expression = re.sub(
-                r"[^0-9+\-*/().]",
-                "",
-                expression
-            )
-
-
-            result = eval(expression)
+            result = self.safe_eval(expression)
 
             return str(result)
 
 
         except Exception:
-            return "Unable to calculate expression"
+
+            return "Invalid expression"
+
+
+
+    def safe_eval(self, expression):
+
+        allowed_operators = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv,
+            ast.Pow: operator.pow,
+            ast.Mod: operator.mod
+        }
+
+
+        def evaluate(node):
+
+            if isinstance(node, ast.Constant):
+
+                return node.value
+
+
+            elif isinstance(node, ast.BinOp):
+
+                left = evaluate(node.left)
+                right = evaluate(node.right)
+
+                operator_function = allowed_operators[
+                    type(node.op)
+                ]
+
+                return operator_function(
+                    left,
+                    right
+                )
+
+
+            else:
+
+                raise ValueError(
+                    "Unsupported expression"
+                )
+
+
+        tree = ast.parse(
+            expression,
+            mode="eval"
+        )
+
+
+        return evaluate(tree.body)

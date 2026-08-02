@@ -25,13 +25,14 @@ class LLMService:
         self.memory = ConversationMemory()
 
 
-    def generate_response(self, prompt: str):
+    def generate_response(self, prompt: str, use_memory=True):
 
         # Store user message
-        self.memory.add_message(
+        if use_memory:
+            self.memory.add_message(
             "user",
             prompt
-        )
+    )
 
 
         messages = [
@@ -43,9 +44,10 @@ class LLMService:
 
 
         # Add conversation history
-        messages.extend(
-            self.memory.get_messages()
-        )
+        if use_memory:
+            messages.extend(
+        self.memory.get_messages()
+    )
 
 
         response = self.client.chat.completions.create(
@@ -58,14 +60,20 @@ class LLMService:
         )
 
 
-        answer = response.choices[0].message.content
+        answer = response.choices[0].message.content.strip()
+
+
+        # Remove extra quotes from LLM output
+        if answer.startswith('"') and answer.endswith('"'):
+            answer = answer[1:-1]
 
 
         # Store assistant response
-        self.memory.add_message(
-            "assistant",
-            answer
-        )
+        if use_memory:
+            self.memory.add_message(
+        "assistant",
+        answer
+    )
 
 
         return answer

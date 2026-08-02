@@ -1,0 +1,59 @@
+# =========================
+# Backend
+# =========================
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+python-multipart
+
+# =========================
+# AI Framework
+# =========================
+langchain
+langgraph
+langchain-community
+langchain-openai
+
+# =========================
+# Vector Database
+# =========================
+chromadb
+
+# =========================
+# Embeddings
+# =========================
+sentence-transformers
+
+# =========================
+# LLM Providers
+# =========================
+openai
+groq
+
+# =========================
+# Document Processing
+# =========================
+pypdf
+python-docx
+tiktoken
+
+# =========================
+# Frontend
+# =========================
+streamlit
+
+# =========================
+# Database
+# =========================
+sqlalchemy
+
+# =========================
+# Utilities
+# =========================
+httpx
+
+# =========================
+# Testing
+# =========================
+pytest

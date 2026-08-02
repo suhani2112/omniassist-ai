@@ -22,3 +22,13 @@ data/vector_db/
 # Database
 *.db
 *.sqlite3
+
+# Runtime data
+data/raw/*
+!data/raw/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
+
+data/vector_db/*
+!data/vector_db/.gitkeep

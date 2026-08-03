@@ -1,27 +1,41 @@
 from backend.services.llm_service import LLMService
 from backend.agent.planner import AgentPlanner
 from backend.agent.executor import AgentExecutor
+from backend.tools.tool_registry import ToolRegistry
 
 
+# ----------------------------
+# Load all available tools
+# ----------------------------
+registry = ToolRegistry()
+
+print("\nLoaded Tools:")
+for tool in registry.get_available_tools():
+    print(tool)
+
+
+# ----------------------------
 # Create shared LLM
+# ----------------------------
 llm = LLMService()
 
 
-# Pass LLM to planner
+# ----------------------------
+# Create planner & executor
+# ----------------------------
 planner = AgentPlanner(llm)
-
-
 executor = AgentExecutor()
 
 
+# ----------------------------
+# Test Query
+# ----------------------------
 query = "what is machine learning"
-
 
 plan = planner.decide(query)
 
-print("PLAN:")
+print("\nPLAN:")
 print(plan)
-
 
 result = executor.execute(plan)
 

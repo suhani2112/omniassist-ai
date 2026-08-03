@@ -6,146 +6,115 @@ from backend.tools.tool_registry import ToolRegistry
 
 class AgentPlanner:
 
-
     def __init__(self, llm: LLMService):
 
         self.llm = llm
-
         self.registry = ToolRegistry()
-
-
 
     def decide(self, query: str):
 
+        # Dynamically load available tools
+        available_tools = self.registry.get_available_tools()
 
-        # -----------------------------------
-        # Step 1: Rule-based tool detection
-        # -----------------------------------
+        tool_catalog = []
 
-        math_keywords = [
-            "calculate",
-            "add",
-            "subtract",
-            "multiply",
-            "divide",
-            "plus",
-            "minus",
-            "times",
-            "product",
-            "sum"
-        ]
+        for tool in available_tools:
 
-
-        query_lower = query.lower()
-
-
-        if any(
-            word in query_lower
-            for word in math_keywords
-        ):
-
-
-            expression = query_lower
-
-
-            remove_words = [
-                "calculate",
-                "what is",
-                "find",
-                "the answer of",
-                "please",
-                "solve"
-            ]
-
-
-            for word in remove_words:
-
-                expression = expression.replace(
-                    word,
-                    ""
-                )
-
-
-            return {
-
-                "tool": "calculator",
-
-                "input": expression.strip()
-
-            }
-
-
-
-        # -----------------------------------
-        # Step 2: LLM based planning
-        # -----------------------------------
-
-
-        available_tools = self.registry.list_tools()
-
+            tool_catalog.append(
+                {
+                    "name": tool["name"],
+                    "description": tool["description"],
+                    "capabilities": tool["capabilities"]
+        }
+    )
 
         prompt = f"""
-You are an AI agent planner.
+You are the planning engine of OmniAssistAI.
 
-Your job is to decide whether a tool is needed.
+Your responsibility is to understand the user's GOAL and decide whether one of the available tools should be used.
 
 Available tools:
 
-{available_tools}
+{json.dumps(tool_catalog, indent=2)}
 
+Instructions:
 
-Rules:
+1. Read the user's request carefully.
+2. Identify the user's overall goal.
+3. Decide whether one of the available tools can help.
+4. If no tool is required, return tool as null.
+5. Return ONLY valid JSON.
+6. Do NOT include markdown or explanations.
 
-1. Use calculator only for mathematical calculations.
-2. For normal questions, return tool as null.
-3. Return ONLY valid JSON.
-4. Do not add explanations.
+Return exactly in this format:
 
+{{
+    "goal": "...",
+    "tool": "...",
+    "input": "...",
+    "reason": "..."
+}}
 
-User query:
+Examples:
+
+User:
+calculate 25*40
+
+Response:
+{{
+    "goal": "Calculate a mathematical expression",
+    "tool": "calculator",
+    "input": "25*40",
+    "reason": "Mathematical calculation is required."
+}}
+
+User:
+What is machine learning?
+
+Response:
+{{
+    "goal": "Learn about machine learning",
+    "tool": null,
+    "input": "What is machine learning?",
+    "reason": "General knowledge question."
+}}
+
+User:
 
 {query}
-
-
-Return one of these formats:
-
-
-{{
-    "tool": "calculator",
-    "input": "mathematical expression"
-}}
-
-
-OR
-
-
-{{
-    "tool": null,
-    "input": "{query}"
-}}
 """
-
 
         response = self.llm.generate_response(
             prompt,
             use_memory=False
         )
 
-
         try:
 
-            return json.loads(
-                response
-            )
+            response = self.llm.generate_response(
+            prompt,
+            use_memory=False
+)
 
+            print("\n========== RAW LLM RESPONSE ==========")
+            print(response)
+            print("======================================")
+
+            plan = json.loads(response)
+
+            # Ensure required keys exist
+            return {
+                "goal": plan.get("goal", ""),
+                "tool": plan.get("tool"),
+                "input": plan.get("input", query),
+                "reason": plan.get("reason", "")
+            }
 
         except Exception:
 
-
             return {
-
+                "goal": "Answer the user's question",
                 "tool": None,
-
-                "input": query
-
+                "input": query,
+                "reason": "Planner could not generate a valid plan."
             }

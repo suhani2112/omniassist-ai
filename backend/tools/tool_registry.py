@@ -1,4 +1,10 @@
-from backend.tools.calculator import CalculatorTool
+import importlib
+import inspect
+import pkgutil
+
+from backend.tools.base_tool import BaseTool
+from backend.tools.pdf.tool import PDFTool
+import backend.tools
 
 
 class ToolRegistry:
@@ -7,14 +13,40 @@ class ToolRegistry:
 
         self.tools = {}
 
-        self.register_tool(
-            CalculatorTool()
-        )
+        self.load_tools()
 
 
-    def register_tool(self, tool):
+    def load_tools(self):
 
-        self.tools[tool.name] = tool
+        package = backend.tools
+
+        for _, module_name, _ in pkgutil.iter_modules(package.__path__):
+
+            # Skip infrastructure files
+            if module_name in [
+                "base_tool",
+                "tool_registry",
+                "__init__"
+            ]:
+                continue
+
+            module = importlib.import_module(
+                f"backend.tools.{module_name}"
+            )
+
+            for _, obj in inspect.getmembers(module):
+
+                if (
+                    inspect.isclass(obj)
+                    and issubclass(obj, BaseTool)
+                    and obj is not BaseTool
+                ):
+
+                    tool = obj()
+
+                    self.tools[
+                        tool.name
+                    ] = tool
 
 
     def get_tool(self, name):
@@ -22,9 +54,11 @@ class ToolRegistry:
         return self.tools.get(name)
 
 
-    def list_tools(self):
+    def get_available_tools(self):
 
-        return {
-            name: tool.description
-            for name, tool in self.tools.items()
-        }
+        return [
+            tool.get_metadata()
+            for tool in self.tools.values()
+        ]
+    def list_tools(self):
+        return self.get_available_tools()

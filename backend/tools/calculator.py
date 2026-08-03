@@ -1,86 +1,94 @@
+from backend.tools.base_tool import BaseTool
 import ast
 import operator
-
-from backend.tools.base_tool import BaseTool
 
 
 class CalculatorTool(BaseTool):
 
+    def __init__(self):
 
-    @property
-    def name(self):
+        super().__init__()
 
-        return "calculator"
+        self.name = "calculator"
 
+        self.description = "Performs mathematical calculations."
 
-    @property
-    def description(self):
+        self.category = "utility"
 
-        return "Used for mathematical calculations"
+        self.supported_inputs = [
+            "25+10",
+            "100/4",
+            "50*20",
+            "(5+3)*2"
+        ]
+        self.capabilities = [
 
+        "mathematical calculation",
 
-    def run(self, input_data: str):
+        "arithmetic",
 
-        try:
+        "evaluate expressions",
 
-            expression = input_data.strip()
+        "basic mathematics"
+]
 
-            result = self.safe_eval(expression)
-
-            return str(result)
-
-
-        except Exception:
-
-            return "Invalid expression"
-
-
-
-    def safe_eval(self, expression):
-
-        allowed_operators = {
+        self.operators = {
             ast.Add: operator.add,
             ast.Sub: operator.sub,
             ast.Mult: operator.mul,
             ast.Div: operator.truediv,
             ast.Pow: operator.pow,
-            ast.Mod: operator.mod
+            ast.Mod: operator.mod,
+            ast.USub: operator.neg
         }
 
 
-        def evaluate(node):
+    def run(self, input_data):
 
-            if isinstance(node, ast.Constant):
+        try:
 
-                return node.value
+            result = self.evaluate(input_data)
 
+            return {
+                "success": True,
+                "result": str(result)
+            }
 
-            elif isinstance(node, ast.BinOp):
+        except Exception as e:
 
-                left = evaluate(node.left)
-                right = evaluate(node.right)
-
-                operator_function = allowed_operators[
-                    type(node.op)
-                ]
-
-                return operator_function(
-                    left,
-                    right
-                )
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
-            else:
+    def evaluate(self, expression):
 
-                raise ValueError(
-                    "Unsupported expression"
-                )
+        node = ast.parse(expression, mode="eval").body
 
-
-        tree = ast.parse(
-            expression,
-            mode="eval"
-        )
+        return self._eval(node)
 
 
-        return evaluate(tree.body)
+    def _eval(self, node):
+
+        if isinstance(node, ast.Constant):
+            return node.value
+
+        elif isinstance(node, ast.Num):
+            return node.n
+
+        elif isinstance(node, ast.BinOp):
+
+            return self.operators[type(node.op)](
+                self._eval(node.left),
+                self._eval(node.right)
+            )
+
+        elif isinstance(node, ast.UnaryOp):
+
+            return self.operators[type(node.op)](
+                self._eval(node.operand)
+            )
+
+        else:
+            raise TypeError("Unsupported expression")

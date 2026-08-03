@@ -1,17 +1,25 @@
 from fastapi import FastAPI
-from backend.routes.chat import router
-from backend.routes.logs import router as logs_router
+
+from backend.api.chat import router
+from backend.core.memory import init_memory
+
 
 app = FastAPI(
-    title="OmniAssistAI"
+    title="OmniAssistAI API",
+    version="1.0"
 )
 
 
+@app.on_event("startup")
+def startup_event():
+    init_memory()
+
+
 app.include_router(router)
-app.include_router(logs_router)
+
 
 @app.get("/")
 def home():
     return {
-        "message": "OmniAssistAI Backend Running"
+        "message": "OmniAssistAI API running"
     }

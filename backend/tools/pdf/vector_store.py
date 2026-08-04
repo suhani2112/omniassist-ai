@@ -20,6 +20,9 @@ class PDFVectorStore:
             name="pdf_documents"
         )
 
+    # ----------------------------------------------------
+    # Add PDF Chunks
+    # ----------------------------------------------------
 
     def add_document(self, document: PDFDocument):
 
@@ -27,7 +30,6 @@ class PDFVectorStore:
         embeddings = []
         documents = []
         metadatas = []
-
 
         for chunk in document.chunks:
 
@@ -49,7 +51,6 @@ class PDFVectorStore:
                 }
             )
 
-
         self.collection.add(
 
             ids=ids,
@@ -59,27 +60,61 @@ class PDFVectorStore:
             documents=documents,
 
             metadatas=metadatas
+
         )
 
+    # ----------------------------------------------------
+    # Search
+    # ----------------------------------------------------
 
-    def search(self, query, top_k=5):
+    def search(
+        self,
+        query,
+        top_k=3
+    ):
 
         query_embedding = self.embedder.embed(query)
-
 
         results = self.collection.query(
 
             query_embeddings=[query_embedding],
 
-            n_results=top_k
+            n_results=top_k,
+
+            include=[
+                "documents",
+                "metadatas",
+                "distances"
+            ]
+
         )
 
+        print("\n==============================")
+        print("Retriever Results")
+        print("==============================")
 
-        return results
+        docs = results.get("documents", [[]])[0]
+        distances = results.get("distances", [[]])[0]
 
+        filtered_docs = []
+
+        for doc, distance in zip(docs, distances):
+
+            print(f"\nDistance : {distance:.4f}")
+            print(doc[:150])
+
+            # Smaller distance = Better match
+            if distance < 1.2:
+
+                filtered_docs.append(doc)
+
+        print("==============================\n")
+
+        return {
+            "documents": [filtered_docs]
+        }
 
 
 # Global retriever instance
-# Used by rag_pipeline.py
 
 retriever = PDFVectorStore()

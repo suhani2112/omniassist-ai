@@ -12,9 +12,10 @@ class ConversationMemory:
 
         self.db_path = db_path
         self.max_messages = max_messages
-        print("DATABASE PATH:", self.db_path)
-        self.create_table()
 
+        print("DATABASE PATH:", self.db_path)
+
+        self.create_table()
 
     def create_table(self):
 
@@ -43,26 +44,16 @@ class ConversationMemory:
         conn.commit()
         conn.close()
 
-
-
     def add_message(
         self,
         user_id,
         role,
         content
     ):
-        print(
-        "SAVING MEMORY:",
-        user_id,
-        role,
-        content
-    )
-
 
         conn = sqlite3.connect(self.db_path)
 
         cursor = conn.cursor()
-
 
         cursor.execute(
             """
@@ -84,11 +75,8 @@ class ConversationMemory:
             )
         )
 
-
         conn.commit()
         conn.close()
-
-
 
     def get_messages(
         self,
@@ -98,7 +86,6 @@ class ConversationMemory:
         conn = sqlite3.connect(self.db_path)
 
         cursor = conn.cursor()
-
 
         cursor.execute(
             """
@@ -111,7 +98,6 @@ class ConversationMemory:
             ORDER BY id DESC
 
             LIMIT ?
-
             """,
             (
                 user_id,
@@ -119,14 +105,11 @@ class ConversationMemory:
             )
         )
 
-
         rows = cursor.fetchall()
 
         conn.close()
 
-
         messages = []
-
 
         for role, content in reversed(rows):
 
@@ -137,10 +120,7 @@ class ConversationMemory:
                 }
             )
 
-
         return messages
-
-
 
     def clear(
         self,
@@ -151,19 +131,16 @@ class ConversationMemory:
 
         cursor = conn.cursor()
 
-
         cursor.execute(
             """
             DELETE FROM memories
 
             WHERE user_id = ?
-
             """,
             (
                 user_id,
             )
         )
-
 
         conn.commit()
         conn.close()

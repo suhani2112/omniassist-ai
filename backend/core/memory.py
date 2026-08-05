@@ -1,9 +1,6 @@
-# backend/core/memory.py
-
 import sqlite3
 import os
 from datetime import datetime
-
 
 DB_PATH = "backend/database/memory.db"
 
@@ -20,6 +17,9 @@ def init_memory():
 
     cursor = conn.cursor()
 
+    # -----------------------------
+    # Permanent Memory Table
+    # -----------------------------
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS memories(
@@ -38,9 +38,31 @@ def init_memory():
         """
     )
 
+    # -----------------------------
+    # Conversation History Table
+    # -----------------------------
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS conversations(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            chat_id TEXT NOT NULL,
+
+            user_id TEXT NOT NULL,
+
+            role TEXT NOT NULL,
+
+            content TEXT NOT NULL,
+
+            created_at TEXT NOT NULL
+
+        )
+        """
+    )
+
     conn.commit()
     conn.close()
-
 
 
 def save_memory(user_id, key, value):
@@ -48,7 +70,6 @@ def save_memory(user_id, key, value):
     conn = sqlite3.connect(DB_PATH)
 
     cursor = conn.cursor()
-
 
     # Remove old value of same memory key
     cursor.execute(
@@ -62,9 +83,7 @@ def save_memory(user_id, key, value):
         )
     )
 
-
     # Insert updated memory
-
     cursor.execute(
         """
         INSERT INTO memories
@@ -85,10 +104,8 @@ def save_memory(user_id, key, value):
         )
     )
 
-
     conn.commit()
     conn.close()
-
 
 
 def get_memory(user_id):
@@ -96,7 +113,6 @@ def get_memory(user_id):
     conn = sqlite3.connect(DB_PATH)
 
     cursor = conn.cursor()
-
 
     cursor.execute(
         """
@@ -108,37 +124,30 @@ def get_memory(user_id):
         (user_id,)
     )
 
-
     rows = cursor.fetchall()
-
 
     conn.close()
 
-
     memory = {}
 
-
-    for key,value in rows:
+    for key, value in rows:
 
         # keep latest value only
         if key not in memory:
             memory[key] = value
 
-
     return memory
-
 
 
 def clear_memory(user_id):
 
     """
-    Delete all memories of a user
+    Delete all permanent memories of a user
     """
 
     conn = sqlite3.connect(DB_PATH)
 
     cursor = conn.cursor()
-
 
     cursor.execute(
         """
@@ -147,7 +156,6 @@ def clear_memory(user_id):
         """,
         (user_id,)
     )
-
 
     conn.commit()
     conn.close()

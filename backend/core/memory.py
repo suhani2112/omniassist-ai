@@ -2,6 +2,7 @@ import sqlite3
 import os
 from datetime import datetime
 
+
 DB_PATH = "backend/database/memory.db"
 
 
@@ -17,9 +18,11 @@ def init_memory():
 
     cursor = conn.cursor()
 
-    # -----------------------------
+
+    # ---------------------------------
     # Permanent Memory Table
-    # -----------------------------
+    # ---------------------------------
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS memories(
@@ -38,9 +41,11 @@ def init_memory():
         """
     )
 
-    # -----------------------------
+
+    # ---------------------------------
     # Conversation History Table
-    # -----------------------------
+    # ---------------------------------
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS conversations(
@@ -61,17 +66,59 @@ def init_memory():
         """
     )
 
+
     conn.commit()
     conn.close()
 
 
-def save_memory(user_id, key, value):
+
+# ---------------------------------
+# Save Permanent Memory
+# ---------------------------------
+
+def save_memory(
+    user_id,
+    key,
+    value
+):
+
+    # Only allow real permanent facts
+
+    allowed_keys = [
+
+        "name",
+
+        "city",
+
+        "location",
+
+        "profession",
+
+        "education",
+
+        "skill",
+
+        "preference"
+
+    ]
+
+
+    # Ignore unnecessary extracted data
+
+    if key not in allowed_keys:
+
+        return
+
+
 
     conn = sqlite3.connect(DB_PATH)
 
     cursor = conn.cursor()
 
-    # Remove old value of same memory key
+
+
+    # Remove previous value
+
     cursor.execute(
         """
         DELETE FROM memories
@@ -83,7 +130,10 @@ def save_memory(user_id, key, value):
         )
     )
 
-    # Insert updated memory
+
+
+    # Insert new value
+
     cursor.execute(
         """
         INSERT INTO memories
@@ -104,9 +154,16 @@ def save_memory(user_id, key, value):
         )
     )
 
+
     conn.commit()
+
     conn.close()
 
+
+
+# ---------------------------------
+# Get Permanent Memory
+# ---------------------------------
 
 def get_memory(user_id):
 
@@ -114,30 +171,48 @@ def get_memory(user_id):
 
     cursor = conn.cursor()
 
+
     cursor.execute(
         """
         SELECT key,value
+
         FROM memories
+
         WHERE user_id=?
+
         ORDER BY id DESC
+
         """,
-        (user_id,)
+        (
+            user_id,
+        )
     )
+
 
     rows = cursor.fetchall()
 
+
     conn.close()
+
 
     memory = {}
 
-    for key, value in rows:
 
-        # keep latest value only
+    for key,value in rows:
+
         if key not in memory:
+
             memory[key] = value
+
+
 
     return memory
 
+
+
+# ---------------------------------
+# Clear Permanent Memory
+# ---------------------------------
 
 def clear_memory(user_id):
 
@@ -149,13 +224,117 @@ def clear_memory(user_id):
 
     cursor = conn.cursor()
 
+
     cursor.execute(
         """
         DELETE FROM memories
+
         WHERE user_id=?
+
         """,
-        (user_id,)
+        (
+            user_id,
+        )
     )
 
+
     conn.commit()
+
     conn.close()
+
+
+
+# ---------------------------------
+# Save Conversation
+# ---------------------------------
+
+def save_conversation(
+    user_id,
+    role,
+    content,
+    chat_id="default_chat"
+):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        INSERT INTO conversations
+        (
+            chat_id,
+            user_id,
+            role,
+            content,
+            created_at
+        )
+
+        VALUES (?,?,?,?,?)
+
+        """,
+        (
+            chat_id,
+            user_id,
+            role,
+            content,
+            datetime.now().isoformat()
+        )
+    )
+
+
+    conn.commit()
+
+    conn.close()
+
+
+
+# ---------------------------------
+# Get Conversation
+# ---------------------------------
+
+def get_conversation(user_id):
+
+    conn = sqlite3.connect(DB_PATH)
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT role,content
+
+        FROM conversations
+
+        WHERE user_id=?
+
+        ORDER BY id ASC
+
+        """,
+        (
+            user_id,
+        )
+    )
+
+
+    rows = cursor.fetchall()
+
+
+    conn.close()
+
+
+    messages = []
+
+
+    for role,content in rows:
+
+        messages.append(
+            {
+                "role": role,
+                "content": content
+            }
+        )
+
+
+    return messages

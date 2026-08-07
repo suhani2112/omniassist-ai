@@ -8,13 +8,23 @@ router = APIRouter()
 
 
 
+# ---------------------------------
+# Request Model
+# ---------------------------------
+
 class ChatRequest(BaseModel):
 
     user_id: str
 
     question: str
 
+    active_pdf: str | None = None
 
+
+
+# ---------------------------------
+# Response Model
+# ---------------------------------
 
 class ChatResponse(BaseModel):
 
@@ -22,6 +32,9 @@ class ChatResponse(BaseModel):
 
 
 
+# ---------------------------------
+# Chat Endpoint
+# ---------------------------------
 
 @router.post(
     "/chat",
@@ -36,7 +49,9 @@ def chat(
 
         request.question,
 
-        user_id=request.user_id
+        user_id=request.user_id,
+
+        active_pdf=request.active_pdf
 
     )
 
